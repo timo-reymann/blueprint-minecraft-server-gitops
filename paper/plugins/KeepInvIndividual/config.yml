@@ -1,0 +1,31 @@
+# NOTE: When using the blacklist, please make sure to write the causes in caps like this:
+# blacklist:
+# - VOID
+# - EXPLOSION
+# ----------------------------------------------------------------------------------------
+# If you want to leave the list empty, please enter the list like this:
+# blacklist: []
+# ----------------------------------------------------------------------------------------
+# You can find a list of all damage causes here:
+# https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/entity/EntityDamageEvent.DamageCause.html
+# ----------------------------------------------------------------------------------------
+
+world-blacklist:
+  enabled: false
+  blacklist: []
+deathcause-blacklist:
+  enabled: false
+  blacklist: []
+itemdrop-blacklist:
+  enabled: false
+  blacklist: []
+mysql:
+  enabled: false
+  host: HOST NAME
+  port: PORT
+  database: DATABASE NAME
+  user: USERNAME
+  password: PASSWORD
+debug:
+  enabled: false
+  send-on-join-notification: false

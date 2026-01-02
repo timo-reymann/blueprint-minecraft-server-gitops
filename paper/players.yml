@@ -1,0 +1,8 @@
+# Players configuration file
+# This file is used to manage players dynamically for the Minecraft server
+# Each player entry should have:
+#   - uuid: The player's UUID
+#   - name: The player's username
+#   - keepInventoryEnabled: Whether this player keeps inventory on death (true/false)
+
+players: []

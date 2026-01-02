@@ -1,0 +1,128 @@
+# =============================================================================
+# Minecraft Server GitOps - Docker Compose Configuration
+# =============================================================================
+# This file orchestrates three services:
+#   1. paper     - The Minecraft server (Paper fork)
+#   2. webhookd  - Webhook handler for GitOps deployments
+#   3. caddy     - Reverse proxy with automatic HTTPS
+#
+# Getting started:
+#   1. Customize environment variables below (search for "CUSTOMIZE")
+#   2. Run: docker compose up -d
+#   3. View logs: docker compose logs -f paper
+#
+# Documentation:
+#   - Docker Compose: https://docs.docker.com/compose/
+#   - Paper Server: https://docs.papermc.io/
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Paper Minecraft Server
+  # ===========================================================================
+  # The main Minecraft server running PaperMC (a high-performance Spigot fork).
+  # See paper/Dockerfile for build details and plugin configuration.
+  # ===========================================================================
+  paper:
+    build:
+      context: paper
+    # CUSTOMIZE: Change to linux/arm64 if running on ARM (e.g., Raspberry Pi, Apple Silicon)
+    platform: linux/amd64
+    # Required for interactive console access via `docker attach`
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+    environment:
+      # CUSTOMIZE: Discord integration for chat bridge (BasicDiscordRelay plugin)
+      # Create a bot at https://discord.com/developers/applications
+      DISCORD_BOT_TOKEN: "token for discord sync"
+      DISCORD_CHANNEL_ID: "channel id to sync messages with"
+
+    volumes:
+      # === World Persistence ===
+      # These directories store your Minecraft worlds. They persist across
+      # container rebuilds. Back these up regularly!
+      - ./data/world:/opt/minecraft-server/world                # Overworld
+      - ./data/world_nether:/opt/minecraft-server/world_nether  # Nether dimension
+      - ./data/world_the_end:/opt/minecraft-server/world_the_end # End dimension
+
+      # === Server Data ===
+      - ./data/logs:/opt/minecraft-server/logs      # Server logs (useful for debugging)
+      - ./data/backups:/backups                     # Backup storage (Backuper plugin)
+      - ./data/image-frames:/opt/minecraft-server/plugins/ImageFrame/data  # ImageFrame plugin data
+
+      # === Temporary Filesystems (tmpfs) ===
+      # These are ephemeral and cleared on restart. Improves performance and
+      # avoids cluttering persistent storage with temporary files.
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: 0o01777
+      - type: tmpfs
+        target: /opt/minecraft-server/plugins/.paper-remapped  # Plugin remapping cache
+        tmpfs:
+          mode: 0o01777
+      - type: tmpfs
+        target: /opt/minecraft-server/crash-reports  # Crash reports (check logs instead)
+        tmpfs:
+          mode: 0o01777
+
+    ports:
+      # CUSTOMIZE: Change left side to use different host ports
+      - "25565:25565"      # Minecraft Java Edition default port
+      - "24454:24454/udp"  # Simple Voice Chat plugin (https://modrequire.com/simple-voice-chat)
+
+  # ===========================================================================
+  # Webhookd - GitOps Deployment Handler
+  # ===========================================================================
+  # Receives webhook calls (e.g., from GitLab CI) to trigger server updates.
+  # When called, it pulls the latest git changes, rebuilds, and restarts the server.
+  # See webhookd/scripts/update.sh for the deployment logic.
+  # Documentation: https://github.com/ncarlier/webhookd
+  # ===========================================================================
+  webhookd:
+    build:
+      context: webhookd
+    restart: unless-stopped
+    volumes:
+      # Mount the entire project so webhookd can run git pull and docker compose
+      - ./:/opt/minecraft
+      # Docker socket access allows webhookd to rebuild and restart containers
+      # Security note: This gives webhookd full Docker access - keep the webhook authenticated!
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # Internal port only - Caddy proxies external requests to this
+      - "8080"
+
+  # ===========================================================================
+  # Caddy - Reverse Proxy with Automatic HTTPS
+  # ===========================================================================
+  # Provides HTTPS termination and routes requests to services.
+  # Caddy automatically obtains and renews Let's Encrypt certificates.
+  # See caddy/Caddyfile for routing configuration.
+  # Documentation: https://caddyserver.com/docs/
+  # ===========================================================================
+  caddy:
+    build:
+      context: caddy
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS
+    environment:
+      # CUSTOMIZE: Your domain name (must point to this server's IP)
+      HOSTNAME: your-domain.io
+    restart: unless-stopped
+    depends_on:
+      - webhookd
+    links:
+      - webhookd
+    volumes:
+      # Persists certificates and Caddy state across restarts
+      - caddy_data:/data
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+volumes:
+  caddy_data: {}  # Stores Caddy's TLS certificates and configuration state

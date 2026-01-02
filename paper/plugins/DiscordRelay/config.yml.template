@@ -1,0 +1,6 @@
+discord-bot-token: '${DISCORD_BOT_TOKEN}'
+discord-channel-id: '${DISCORD_CHANNEL_ID}'
+
+word-filter:
+  enabled: false
+  words: []

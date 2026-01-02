@@ -1,0 +1,85 @@
+# =============================================================================
+# Caddyfile - Reverse Proxy Configuration
+# =============================================================================
+# This file configures Caddy to:
+#   1. Serve a static landing page at the root domain
+#   2. Proxy /update requests to webhookd for GitOps deployments
+#   3. Protect the /update endpoint with HTTP Basic Authentication
+#
+# Caddy automatically handles:
+#   - HTTPS certificate provisioning via Let's Encrypt
+#   - HTTP to HTTPS redirects
+#   - Certificate renewal
+#
+# Documentation: https://caddyserver.com/docs/caddyfile
+# =============================================================================
+
+# =============================================================================
+# Global Options
+# =============================================================================
+# These settings apply to all sites defined in this Caddyfile.
+# See: https://caddyserver.com/docs/caddyfile/options
+# =============================================================================
+{
+    # Disable the admin API (not needed for this use case, reduces attack surface)
+    admin off
+    # Don't persist auto-generated config (we manage config via GitOps)
+    persist_config off
+}
+
+# =============================================================================
+# Site Block - Main Domain Configuration
+# =============================================================================
+# {$HOSTNAME} is replaced with the HOSTNAME environment variable from
+# docker-compose.yml (e.g., "kellercamp.de")
+#
+# CUSTOMIZE: If you need multiple domains, add additional site blocks below
+# =============================================================================
+{$HOSTNAME} {
+    # ==========================================================================
+    # Static File Server
+    # ==========================================================================
+    # Serves files from /opt/caddy/rootfs at the root URL
+    # CUSTOMIZE: Replace rootfs/index.html with your own landing page
+    # ==========================================================================
+    root * /opt/caddy/rootfs
+    file_server browse  # 'browse' enables directory listing (remove if unwanted)
+
+    # Enable gzip compression for faster page loads
+    encode gzip
+
+    # ==========================================================================
+    # Logging
+    # ==========================================================================
+    # Logs to stdout so Docker can capture them (view with: docker compose logs caddy)
+    # ==========================================================================
+    log {
+        output stdout
+        format console  # Human-readable format (use 'json' for structured logging)
+    }
+
+    # ==========================================================================
+    # GitOps Webhook Proxy
+    # ==========================================================================
+    # Routes /update requests to the webhookd container.
+    # This is the endpoint that CI/CD calls to trigger server updates.
+    # ==========================================================================
+    reverse_proxy /update webhookd:8080
+
+    # ==========================================================================
+    # Authentication for Webhook Endpoint
+    # ==========================================================================
+    # Protects /update with HTTP Basic Auth to prevent unauthorized deployments.
+    #
+    # CUSTOMIZE: Generate a password hash with:
+    #   $ docker run --rm caddy:2-alpine caddy hash-password --plaintext 'your-password'
+    #
+    # Then replace <user> and <hashed password> below.
+    # The same credentials must be used in update.sh's Authorization header.
+    #
+    # See: https://caddyserver.com/docs/caddyfile/directives/basic_auth
+    # ==========================================================================
+    basic_auth /update {
+        <user> <hashed password>
+    }
+}

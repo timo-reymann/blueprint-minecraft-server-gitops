@@ -1,0 +1,79 @@
+# DO NOT CHANGE
+configVersion: 13.0
+lastBackup: 0
+lastChange: 0
+
+backup:
+  # (true/false) Automatic backup once in a specified period
+  autoBackup: true
+  # (MINUTES > 0 or -1) Backup period. To use this value, you need to set autoBackupCron to an empty string and autoBackup to true
+  autoBackupPeriod: 480
+  # (Expression) Auto-backup schedule expression. If it's defined, it'll be used instead of autoBackupPeriod. Use this site to generate your one: http://www.cronmaker.com
+  autoBackupCron: ''
+
+  # (Expression) Set a format for backup file names (see java.time docs). It must contain information about both time and date
+  backupFileNameFormat: yyyy-MM-dd_HH-mm
+  # (Path list) (An example of how to set a list is below) Full directory paths to folders/files that you want to be backed up. Worlds will be backed up automatically, so you do not need to specify world folders there (For example, you can specify "plugins", "config") You can also specify all files with "*".
+  # addDirectoryToBackup:
+  # - 'path1'
+  # - 'path2'
+  # - ...
+  addDirectoryToBackup: []
+  # (Path list) (An example of how to set a list is below) Full directory paths to folders/files that you want to be excluded from backup. If you want to backup everything from the folder1 except some folder1/file1, you can specify folder1 in addDirectoryToBackup and folder1/file1 in excludeDirectoryFromBackup. (The backupsFolder directory will be excluded automatically to prevent the loop)
+  # excludeDirectoryFromBackup:
+  # - 'path1'
+  # - 'path2'
+  # - ...
+  excludeDirectoryFromBackup: []
+
+  # (true/false) Sometimes errors may occur while creating a backup. When this option is enabled, such backups will be deleted
+  deleteBrokenBackups: true
+  # (true/false) The backup will only occur if the world has been changed since the last backup. If the world has not been changed, this backup cycle will be skipped
+  skipDuplicateBackup: false
+  # (STOP, RESTART, NOTHING) What to do after an automatic backup
+  afterBackup: NOTHING
+
+  # (true/false) (True recommended) The backuper will mark all world folders as Read-Only to prevent folder changing that may cause the backup crash. True value may cause access denied errors during the backup (you should just ignore that)
+  setWorldsReadOnly: false
+
+server:
+  # (SECONDS < backupPeriod * 60 or -1) A notification about the server restart will be sent to all players on the server {alertTimeBeforeRestart} seconds before the restart. -1 to disable notifications
+  alertTimeBeforeRestart: 60
+  # (true/false) Notifications will be sent only if the server is restarted or stopped after the backup
+  alertOnlyServerRestart: true
+  # (String) Backup alert message. (%d is a number of seconds placeholder)
+  alertBackupMessage: Server will be backed up in %d second(s)
+  # (String) Backup and restart the alert message. (%d is a number of seconds placeholder)
+  alertBackupRestartMessage: Server will be backed up and restarted in %d second(s)
+
+  # (Path) Size cache file
+  sizeCacheFile: /tmp/Backuper-sizeCache.json
+  # (>= 0) Target number of threads that the backuper will use in parallel (It'll try, but it isn't a hard limitation) (0 to automatically set it equal to the number of threads on the server)
+  threadNumber: 0
+
+  # (true/false) Check for new versions of the Backuper to stay up to date
+  checkUpdates: false
+
+  # (true/false) Better logging (Some statistic and other information for debugging, you probably don't need it)
+  betterLogging: false
+
+storages:
+  local:
+    type: local
+    # (true/false) Enable local storage to use it via the Backuper
+    enabled: true
+    # (true/false) With automatic backup, backups will be saved to specified local storage. Works only if 'enabled: true'
+    autoBackup: true
+
+    # (Path) Full directory where backups will be stored
+    backupsFolder: /backups
+
+    # (>= 0) Max backups in backups folder, 0 to make it unlimited
+    maxBackupsNumber: 10
+    # (MB >= 0) Max backups folder weight, 0 to make it unlimited
+    maxBackupsWeight: 0
+
+    # (true/false) Should backups be packaged in a zip archive
+    zipArchive: true
+    # (0 - 9) archive compression level. A higher value may reduce file size but may also increase the time required to archive and decompress
+    zipCompressionLevel: 8
