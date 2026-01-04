@@ -23,31 +23,21 @@ installation or Git fundamentals.
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Your Server                              │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────┐    ┌───────────┐    ┌─────────────────────────┐   │
-│  │  Caddy  │───▶│ Webhookd  │───▶│ git pull + docker build │   │
-│  │ :80/443 │    │   :8080   │    │     + restart paper     │   │
-│  └─────────┘    └───────────┘    └─────────────────────────┘   │
-│       │                                      │                   │
-│       │         ┌──────────────────────────────┐                │
-│       └────────▶│      Paper MC Server         │                │
-│    (landing     │         :25565               │                │
-│      page)      │    :24454/udp (voice chat)   │                │
-│                 └──────────────────────────────┘                │
-└─────────────────────────────────────────────────────────────────┘
-                              ▲
-                              │ POST /update
-                              │
-                    ┌─────────┴─────────┐
-                    │   GitLab CI/CD    │
-                    │  (on git push)    │
-                    └───────────────────┘
-```
+```mermaid
+flowchart TB
+    subgraph server["Your Server"]
+        caddy["Caddy<br>:80/443"]
+        webhookd["Webhookd<br>:8080"]
+        deploy["git pull + docker build<br>+ restart paper"]
+        paper["Paper MC Server<br>:25565<br>:24454/udp (voice chat)"]
 
----
+        caddy -->|webhook| webhookd --> deploy
+        caddy -->|landing page| paper
+    end
+
+    gitlab["GitLab CI/CD<br>(on git push)"]
+    gitlab -->|POST /update| caddy
+```
 
 ## First-Time Setup
 
@@ -161,8 +151,6 @@ git commit -m "Initial server configuration"
 git push origin main
 ```
 
----
-
 ## Server Setup (Remote Host)
 
 ### 1. Initial Clone
@@ -242,8 +230,6 @@ deploy:
 
 Configure the `update.sh` script with your webhook credentials to match the Caddy basic auth.
 
----
-
 ## Adding New Plugins
 
 Once your server is running, here's the workflow for adding plugins:
@@ -314,8 +300,6 @@ Once pushed, the CI/CD pipeline triggers the webhook, which:
 3. Notifies players of the impending restart
 4. Restarts the server with the new configuration
 
----
-
 ## Included Plugins
 
 This blueprint comes with several pre-configured plugins:
@@ -331,8 +315,6 @@ This blueprint comes with several pre-configured plugins:
 | [BasicDiscordRelay](https://github.com/Jelly-Pudding/minecraft-discord-relay) | Discord chat bridge       | 
 | [Keep-Inv-Individual](https://github.com/Logics4/IndividualKeepInventory)     | Per-player keepInventory  |
 | [FastGhast](https://modrinth.com/plugin/fastghast)                            | Happy Ghast speed control |
-
----
 
 ## Maintenance
 
@@ -380,8 +362,6 @@ rsync -av ./data/backups/ user@backup-server:/backups/minecraft/
 2. Update `paper_download_url` in `paper/Dockerfile`
 3. Commit and push - server updates automatically
 
----
-
 ## Troubleshooting
 
 ### Server won't start
@@ -420,8 +400,6 @@ curl -X POST https://your-domain/update \
 
 - Port 24454/UDP must be open
 - Players need the Simple Voice Chat mod installed
-
----
 
 ## License
 
