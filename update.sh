@@ -40,7 +40,7 @@
 #   commit_message      Shown in logs for debugging
 #   restart_in_seconds  CUSTOMIZE: Delay before restart (gives players time to prepare)
 
-curl https://kellercamp.de/update \
+curl https://yourserver.io/update \
     --http1.1 \
     -sS \
     -XPOST \
