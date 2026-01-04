@@ -31,8 +31,8 @@ flowchart TB
         deploy["git pull + docker build<br>+ restart paper"]
         paper["Paper MC Server<br>:25565<br>:24454/udp (voice chat)"]
 
-        caddy -->|webhook| webhookd --> deploy
-        caddy -->|landing page| paper
+        caddy -->|webhook| webhookd --> deploy --> paper
+
     end
 
     gitlab["GitLab CI/CD<br>(on git push)"]
