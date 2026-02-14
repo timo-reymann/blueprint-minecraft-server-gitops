@@ -1,3 +1,6 @@
+# License: unlicense
+LABEL org.opencontainers.image.licenses="unlicense"
+
 # =============================================================================
 # Paper Minecraft Server - Dockerfile
 # =============================================================================
